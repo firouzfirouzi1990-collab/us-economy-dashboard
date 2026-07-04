@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>داشبورد اقتصاد آمریکا | US Economic Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0e1a; --bg-card: #131829; --bg-card-2: #1a2138;
+    --border: #2a3454; --text: #e4e9f7; --text-dim: #8892b0; --text-muted: #5a6485;
+    --green: #00d4a8; --green-glow: rgba(0, 212, 168, 0.15);
+    --red: #ff5b6e; --red-glow: rgba(255, 91, 110, 0.15);
+    --yellow: #ffc857; --yellow-glow: rgba(255, 200, 87, 0.15);
+    --blue: #5b8cff; --blue-glow: rgba(91, 140, 255, 0.15);
+    --purple: #a78bfa;
+  }
+  body {
+    font-family: 'Vazirmatag', 'Segoe UI', Tahoma, sans-serif;
+    background: var(--bg);
+    background-image: radial-gradient(circle at 20% 10%, rgba(91,140,255,0.08), transparent 40%), radial-gradient(circle at 80% 80%, rgba(0,212,168,0.06), transparent 40%);
+    color: var(--text); min-height: 100vh; padding: 24px; line-height: 1.6;
+  }
+  .container { max-width: 1400px; margin: 0 auto; }
+  header { background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-2) 100%); border: 1px solid var(--border); border-radius: 20px; padding: 32px; margin-bottom: 24px; position: relative; overflow: hidden; }
+  header::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(91,140,255,0.06) 0%, transparent 50%); animation: pulse 8s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1);opacity:.5} 50%{transform:scale(1.1);opacity:1} }
+  .header-content { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+  .header-title h1 { font-size: 28px; font-weight: 800; margin-bottom: 6px; }
+  .header-title h1 .flag { margin-left: 8px; }
+  .header-title p { color: var(--text-dim); font-size: 14px; }
+  .header-meta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .badge { background: var(--bg-card-2); border: 1px solid var(--border); padding: 8px 16px; border-radius: 50px; font-size: 13px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; animation: blink 2s infinite; }
+  .badge.green .dot { background: var(--green); }
+  .badge.yellow .dot { background: var(--yellow); }
+  .badge.red .dot { background: var(--red); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; position: relative; overflow: hidden; transition: transform 0.3s, border-color 0.3s; }
+  .kpi-card:hover { transform: translateY(-4px); border-color: var(--blue); }
+  .kpi-card .accent { position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+  .kpi-card.green .accent { background: linear-gradient(90deg, var(--green), transparent); }
+  .kpi-card.red .accent { background: linear-gradient(90deg, var(--red), transparent); }
+  .kpi-card.yellow .accent { background: linear-gradient(90deg, var(--yellow), transparent); }
+  .kpi-card.blue .accent { background: linear-gradient(90deg, var(--blue), transparent); }
+  .kpi-label { color: var(--text-dim); font-size: 13px; margin-bottom: 8px; }
+  .kpi-value { font-size: 36px; font-weight: 800; margin-bottom: 4px; }
+  .kpi-sub { font-size: 12px; color: var(--text-muted); }
+  .kpi-change { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; padding: 2px 10px; border-radius: 50px; margin-top: 8px; }
+  .kpi-change.up { background: var(--green-glow); color: var(--green); }
+  .kpi-change.down { background: var(--red-glow); color: var(--red); }
+  .kpi-change.flat { background: var(--yellow-glow); color: var(--yellow); }
+  .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  .section-title { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .section-title .icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .section-desc { color: var(--text-dim); font-size: 13px; margin-top: 4px; }
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+  .chart-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .chart-card h3 { font-size: 16px; margin-bottom: 4px; }
+  .chart-card .chart-sub { color: var(--text-muted); font-size: 12px; margin-bottom: 16px; }
+  .chart-wrap { position: relative; height: 280px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead th { text-align: right; padding: 12px 14px; color: var(--text-dim); font-weight: 600; border-bottom: 2px solid var(--border); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  tbody td { padding: 14px; border-bottom: 1px solid var(--border); }
+  tbody tr { transition: background 0.2s; }
+  tbody tr:hover { background: var(--bg-card-2); }
+  tbody tr:last-child td { border-bottom: none; }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 50px; font-size: 12px; font-weight: 600; }
+  .pill.good { background: var(--green-glow); color: var(--green); }
+  .pill.bad { background: var(--red-glow); color: var(--red); }
+  .pill.ok { background: var(--yellow-glow); color: var(--yellow); }
+  .market-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .market-card { background: var(--bg-card-2); border: 1px solid var(--border); border-radius: 14px; padding: 20px; text-align: center; }
+  .market-card .emoji { font-size: 32px; margin-bottom: 8px; }
+  .market-card .name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .market-card .direction { font-size: 24px; font-weight: 800; margin: 8px 0; }
+  .market-card .direction.up { color: var(--green); }
+  .market-card .direction.down { color: var(--red); }
+  .market-card .desc { font-size: 12px; color: var(--text-dim); }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 800px) { .summary-grid { grid-template-columns: 1fr; } }
+  .summary-box { background: var(--bg-card-2); border: 1px solid var(--border); border-right: 4px solid var(--blue); border-radius: 12px; padding: 18px; }
+  .summary-box.green { border-right-color: var(--green); }
+  .summary-box.red { border-right-color: var(--red); }
+  .summary-box.yellow { border-right-color: var(--yellow); }
+  .summary-box h4 { font-size: 14px; margin-bottom: 8px; }
+  .summary-box ul { list-style: none; padding: 0; }
+  .summary-box li { font-size: 13px; color: var(--text-dim); padding: 4px 0; padding-right: 18px; position: relative; }
+  .summary-box li::before { content: '▪'; position: absolute; right: 0; color: var(--text-muted); }
+  .scenario-bar { height: 28px; border-radius: 50px; overflow: hidden; display: flex; margin: 12px 0; background: var(--bg); }
+  .scenario-bar > div { display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; transition: width 1s; }
+  footer { text-align: center; color: var(--text-muted); font-size: 12px; padding: 24px; border-top: 1px solid var(--border); margin-top: 12px; }
+  .scale-note { font-size: 11px; color: var(--text-muted); margin-top: 12px; padding: 8px 12px; background: var(--bg); border-radius: 8px; border: 1px dashed var(--border); }
+  #loadingOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.5s; }
+  #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
+  .spinner { width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 600px) { body { padding: 12px; } .header-title h1 { font-size: 22px; } .kpi-value { font-size: 28px; } }
+</style>
+</head>
+<body>
+<div id="loadingOverlay"><div class="spinner"></div></div>
+<div class="container">
+
+  <header>
+    <div class="header-content">
+      <div class="header-title">
+        <h1><span class="flag">🇺🇸</span> داشبورد جامع اقتصاد آمریکا</h1>
+        <p>تحلیل شاخص‌های کلیدی بازار کار — به‌صورت خودکار به‌روزرسانی‌شده</p>
+      </div>
+      <div class="header-meta">
+        <div class="badge green" id="statusBadge"><span class="dot"></span> <span id="sourceText">در حال بارگذاری...</span></div>
+        <div class="badge">📅 <span id="updateTime">—</span></div>
+        <div class="badge">🏦 منبع: FRED / BLS</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="kpi-grid">
+    <div class="kpi-card red">
+      <div class="accent"></div>
+      <div class="kpi-label">📊 NFP — اشتغال غیرکشاورزی</div>
+      <div class="kpi-value" id="kpiNfp">—</div>
+      <div class="kpi-sub" id="kpiNfpSub">—</div>
+      <div class="kpi-change down" id="kpiNfpChange">—</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="accent"></div>
+      <div class="kpi-label">👥 نرخ بیکاری</div>
+      <div class="kpi-value" id="kpiUnemp">—</div>
+      <div class="kpi-sub" id="kpiUnempSub">—</div>
+      <div class="kpi-change up" id="kpiUnempChange">—</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="accent"></div>
+      <div class="kpi-label">💰 دستمزد ساعتی MoM</div>
+      <div class="kpi-value" id="kpiWage">—</div>
+      <div class="kpi-sub" id="kpiWageSub">—</div>
+      <div class="kpi-change flat" id="kpiWageChange">—</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="accent"></div>
+      <div class="kpi-label">📨 ادعای بیکاری</div>
+      <div class="kpi-value" id="kpiClaims">—</div>
+      <div class="kpi-sub" id="kpiClaimsSub">—</div>
+      <div class="kpi-change up" id="kpiClaimsChange">—</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-title"><div class="icon" style="background: var(--red-glow);">📊</div> روند اشتغال غیرکشاورزی (NFP)</div>
+        <div class="section-desc">تعداد مشاغل جدید ایجادشده هر ماه (هزار نفر)</div>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height: 340px;"><canvas id="nfpChart"></canvas></div>
+    <div class="scale-note" id="nfpNote">—</div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>👥 نرخ بیکاری ماهانه</h3>
+      <div class="chart-sub">نرخ بیکاری فصلی‌تنظیم‌شده</div>
+      <div class="chart-wrap"><canvas id="unempChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>💰 رشد دستمزد ساعتی (MoM)</h3>
+      <div class="chart-sub">تورم دستمزد ماهانه</div>
+      <div class="chart-wrap"><canvas id="wageChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>📨 ادعای بیکاری</h3>
+      <div class="chart-sub">مقادیر هفتگی</div>
+      <div class="chart-wrap"><canvas id="claimsChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>🎯 ترکیب شاخص‌ها — رادار</h3>
+      <div class="chart-sub">مقایسه وضعیت فعلی با حالت ایده‌آل</div>
+      <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-title"><div class="icon" style="background: var(--blue-glow);">📋</div> جدول کامل داده‌های ماهانه</div>
+        <div class="section-desc">جزئیات هر شاخص به تفکیک ماه</div>
+      </div>
+    </div>
+    <div style="overflow-x: auto;">
+      <table>
+        <thead><tr><th>ماه</th><th>NFP (شغل جدید)</th><th>ارزیابی</th><th>نرخ بیکاری</th><th>دستمزد MoM</th></tr></thead>
+        <tbody id="dataTableBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted)">در حال بارگذاری...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-title"><div class="icon" style="background: var(--green-glow);">💹</div> اثر احتمالی بر بازارها</div>
+        <div class="section-desc" id="marketDesc">پیش‌بینی جهت واکنش بازارهای مالی</div>
+      </div>
+    </div>
+    <div class="market-grid">
+      <div class="market-card"><div class="emoji">💵</div><div class="name">دلار آمریکا (USD)</div><div class="direction down" id="mDollar">▼ ضعیف‌تر</div><div class="desc">NFP ضعیف → انتظار کاهش نرخ بهره</div></div>
+      <div class="market-card"><div class="emoji">🥇</div><div class="name">طلا (XAU/USD)</div><div class="direction up">▲ صعودی</div><div class="desc">دلار ضعیف → طلا گران‌تر</div></div>
+      <div class="market-card"><div class="emoji">📈</div><div class="name">سهام (S&P/Nasdaq)</div><div class="direction up">▲ صعودی</div><div class="desc">داده ضعیف = کات نرخ = سهام بالا</div></div>
+      <div class="market-card"><div class="emoji">🏦</div><div class="name">اوراق قرضه ۱۰ ساله</div><div class="direction down">▼ بازدهی پایین</div><div class="desc">پناهگاه امن → yield رو به کاهش</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div><div class="section-title"><div class="icon" style="background: var(--yellow-glow);">🧠</div> جمع‌بندی تحلیلی</div></div>
+    </div>
+    <div class="summary-grid">
+      <div class="summary-box green">
+        <h4>✅ نقاط قوت</h4>
+        <ul id="strengths"><li>نرخ بیکاری پایین و پایدار</li><li>اخراج‌ها در سطح تاریخی پایین</li><li>تورم دستمزد مهار شده</li></ul>
+      </div>
+      <div class="summary-box red">
+        <h4>⚠️ نقاط ضعف و ریسک</h4>
+        <ul id="weaknesses"><li>NFP نوسانی و رو به کاهش</li><li>کاهش مشارکت نیروی کار</li><li>احتمال کند شدن استخدام</li></ul>
+      </div>
+      <div class="summary-box yellow">
+        <h4>🏦 سیگنال به فدرال رزرو</h4>
+        <ul id="fedSignal"><li>داده‌ها در حال ارزیابی...</li></ul>
+      </div>
+      <div class="summary-box">
+        <h4>🔮 چشم‌انداز آینده</h4>
+        <ul><li><strong style="color:var(--green)">Soft Landing (۶۰٪)</strong> — فرود نرم</li><li><strong style="color:var(--red)">Recession (۲۵٪)</strong></li><li><strong style="color:var(--yellow)">Re-acceleration (۱۵٪)</strong></li></ul>
+      </div>
+    </div>
+    <div class="scenario-bar" style="margin-top: 24px;">
+      <div style="width: 60%; background: var(--green);">Soft Landing ۶۰٪</div>
+      <div style="width: 25%; background: var(--red);">Recession ۲۵٪</div>
+      <div style="width: 15%; background: var(--yellow); color: #000;">Re-accel ۱۵٪</div>
+    </div>
+  </div>
+
+  <footer>
+    <p>📊 داده‌ها از منابع رسمی: Bureau of Labor Statistics (BLS)، FRED، Trading Economics</p>
+    <p style="margin-top: 8px;">به‌صورت خودکار آپدیت می‌شود — این داشبورد صرفاً جهت تحلیل آموزشی است.</p>
+  </footer>
+</div>
+
+<script>
+Chart.defaults.color = '#8892b0';
+Chart.defaults.font.family = "'Segoe UI', Tahoma, sans-serif";
+Chart.defaults.font.size = 12;
+
+// داده پیش‌فرض (fallback هنگام file:// یا خطای fetch)
+const FALLBACK = {
+  last_update: "2026-07-02T16:30:00", source: "default",
+  nfp: { months: ["ژانویه","فوریه","مارس","آوریل","می","ژوئن"], values: [130,-92,178,115,147,57], forecasts: [68,58,140,62,100,114], previous: [227,130,-92,178,115], unit:"K", latest:57 },
+  unemployment: { months: ["ژانویه","فوریه","مارس","آوریل","می","ژوئن"], values: [4.3,4.4,4.3,4.3,4.3,4.2], latest:4.2 },
+  wage: { months: ["ژانویه","فوریه","مارس","آوریل","می","ژوئن"], values: [0.4,0.3,0.3,0.2,0.3,0.3], yoy:3.5, level:37.64, latest:0.3 },
+  claims: { months: ["ژانویه","فوریه","مارس","آوریل","می","ژوئن"], values: [223,221,219,217,225,215], latest:215 },
+};
+
+const SOURCE_LABELS = {
+  fred: { text: "داده‌های زنده (FRED)", cls: "green" },
+  bls: { text: "داده‌های زنده (BLS)", cls: "green" },
+  scraped: { text: "داده استخراج‌شده", cls: "yellow" },
+  cache: { text: "داده کش‌شده", cls: "yellow" },
+  default: { text: "داده نمونه", cls: "red" },
+};
+
+let DATA = FALLBACK;
+const charts = {};
+
+// ─── بارگذاری داده ───
+async function loadData() {
+  try {
+    const resp = await fetch('data.json', { cache: 'no-store' });
+    if (!resp.ok) throw new Error('fetch failed');
+    DATA = await resp.json();
+    console.log('✅ داده‌ها از data.json بارگذاری شد', DATA);
+  } catch (e) {
+    console.warn('⚠️ data.json در دسترس نیست — استفاده از داده پیش‌فرض', e);
+    DATA = FALLBACK;
+  }
+  renderAll();
+  document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+// ─── تبدیل تاریخ ───
+function formatUpdateTime(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('fa-IR') + ' ' + d.toLocaleTimeString('fa-IR', {hour:'2-digit',minute:'2-digit'});
+  } catch { return iso; }
+}
+
+function shortMonth(label) {
+  // فقط نام ماه رو برمی‌گردونه (اگه "ژوئن 2026" بود → "ژوئن")
+  const parts = String(label).split(' ');
+  return parts[0];
+}
+
+// ─── محاسبه تغییرات ───
+function fmtNum(v, suffix='') {
+  if (v === null || v === undefined) return '—';
+  return (v > 0 ? '+' : '') + v + suffix;
+}
+
+function evalNfp(v) {
+  if (v === null || v === undefined) return { cls: 'ok', text: '—' };
+  if (v < 0) return { cls: 'bad', text: '🔴 فاجعه' };
+  if (v < 80) return { cls: 'bad', text: '🔴 ضعیف' };
+  if (v < 130) return { cls: 'ok', text: '⚠️ متوسط' };
+  return { cls: 'good', text: '🟢 قوی' };
+}
+
+// ─── رندر KPIها ───
+function renderKpis() {
+  const nfp = DATA.nfp || {};
+  const nfpVals = (nfp.values || []).filter(v => v !== null && v !== undefined);
+  const nfpLatest = nfp.latest ?? nfpVals[nfpVals.length-1];
+  const nfpPrev = nfpVals.length >= 2 ? nfpVals[nfpVals.length-2] : null;
+  const nfpForecast = (nfp.forecasts || [])[nfp.forecasts?.length-1];
+  document.getElementById('kpiNfp').textContent = nfpLatest != null ? fmtNum(nfpLatest, 'K') : '—';
+  document.getElementById('kpiNfpSub').textContent = nfpForecast != null ? `پیش‌بینی: ${nfpForecast}K` : '—';
+  const nfpChg = document.getElementById('kpiNfpChange');
+  if (nfpForecast != null && nfpLatest != null) {
+    const diff = nfpLatest - nfpForecast;
+    if (diff < 0) { nfpChg.className = 'kpi-change down'; nfpChg.textContent = `▼ ${Math.abs(Math.round(diff/nfpForecast*100))}٪ زیر انتظار`; }
+    else { nfpChg.className = 'kpi-change up'; nfpChg.textContent = `▲ ${Math.round(diff/nfpForecast*100)}٪ بالاتر از انتظار`; }
+  } else { nfpChg.textContent = ''; }
+
+  const unemp = DATA.unemployment || {};
+  const unempVals = (unemp.values || []).filter(v => v !== null);
+  const unempLatest = unemp.latest ?? unempVals[unempVals.length-1];
+  const unempPrev = unempVals.length >= 2 ? unempVals[unempVals.length-2] : null;
+  document.getElementById('kpiUnemp').textContent = unempLatest != null ? unempLatest + '%' : '—';
+  document.getElementById('kpiUnempSub').textContent = unempPrev != null ? `قبلی: ${unempPrev}%` : '—';
+  const uChg = document.getElementById('kpiUnempChange');
+  if (unempPrev != null && unempLatest != null) {
+    if (unempLatest < unempPrev) { uChg.className = 'kpi-change up'; uChg.textContent = `▼ بهبود ${(unempPrev-unempLatest).toFixed(1)}٪`; }
+    else if (unempLatest > unempPrev) { uChg.className = 'kpi-change down'; uChg.textContent = `▲ بدتر ${(unempLatest-unempPrev).toFixed(1)}٪`; }
+    else { uChg.className = 'kpi-change flat'; uChg.textContent = '━ بدون تغییر'; }
+  } else { uChg.textContent = ''; }
+
+  const wage = DATA.wage || {};
+  const wageVals = (wage.values || []).filter(v => v !== null);
+  const wageLatest = wage.latest ?? wageVals[wageVals.length-1];
+  document.getElementById('kpiWage').textContent = wageLatest != null ? wageLatest + '%' : '—';
+  document.getElementById('kpiWageSub').textContent = wage.level ? `$${wage.level}${wage.yoy ? ' · YoY: ' + wage.yoy + '%' : ''}` : '—';
+  document.getElementById('kpiWageChange').textContent = '';
+
+  const claims = DATA.claims || {};
+  const claimsVals = (claims.values || []).filter(v => v !== null);
+  const claimsLatest = claims.latest ?? claimsVals[claimsVals.length-1];
+  const claimsPrev = claimsVals.length >= 2 ? claimsVals[claimsVals.length-2] : null;
+  document.getElementById('kpiClaims').textContent = claimsLatest != null ? claimsLatest + 'K' : '—';
+  document.getElementById('kpiClaimsSub').textContent = claimsPrev != null ? `قبلی: ${claimsPrev}K` : '—';
+  document.getElementById('kpiClaimsChange').textContent = '';
+}
+
+// ─── رندر جدول ───
+function renderTable() {
+  const nfp = DATA.nfp || {};
+  const unemp = DATA.unemployment || {};
+  const wage = DATA.wage || {};
+  const months = nfp.months || [];
+  let html = '';
+  for (let i = 0; i < months.length; i++) {
+    const nfpV = (nfp.values || [])[i];
+    const unempV = (unemp.values || [])[i];
+    const wageV = (wage.values || [])[i];
+    const ev = evalNfp(nfpV);
+    html += `<tr>
+      <td><strong>${shortMonth(months[i])}</strong></td>
+      <td style="${nfpV < 0 ? 'color:var(--red);font-weight:700' : ''}">${nfpV != null ? (nfpV > 0 ? '+' : '') + nfpV + 'K' : '—'}</td>
+      <td><span class="pill ${ev.cls}">${ev.text}</span></td>
+      <td>${unempV != null ? unempV + '%' : '—'}</td>
+      <td>${wageV != null ? wageV + '%' : '—'}</td>
+    </tr>`;
+  }
+  document.getElementById('dataTableBody').innerHTML = html;
+}
+
+// ─── رندر چارت‌ها ───
+function renderCharts() {
+  const months = (DATA.nfp?.months || []).map(shortMonth);
+  const gridColor = 'rgba(42, 52, 84, 0.5)';
+
+  Object.values(charts).forEach(c => c && c.destroy());
+
+  // 1. NFP
+  const nfpVals = DATA.nfp?.values || [];
+  charts.nfp = new Chart(document.getElementById('nfpChart'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'NFP واقعی (هزار نفر)', data: nfpVals,
+        backgroundColor: ctx => ctx.raw >= 0 ? 'rgba(0,212,168,0.7)' : 'rgba(255,91,110,0.8)',
+        borderColor: ctx => ctx.raw >= 0 ? '#00d4a8' : '#ff5b6e',
+        borderWidth: 2, borderRadius: 8,
+      }, {
+        label: 'پیش‌بینی بازار', data: DATA.nfp?.forecasts || [], type: 'line',
+        borderColor: '#5b8cff', backgroundColor: 'rgba(91,140,255,0.1)',
+        borderWidth: 3, borderDash: [6,4], pointBackgroundColor: '#5b8cff', pointRadius: 5, tension: 0.3,
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { usePointStyle: true, padding: 16 } },
+        tooltip: { backgroundColor: '#1a2138', callbacks: { label: ctx => ctx.raw != null ? `${ctx.dataset.label}: ${ctx.raw}K` : null } } },
+      scales: { y: { grid: { color: gridColor }, ticks: { callback: v => v + 'K' } }, x: { grid: { display: false } } }
+    }
+  });
+
+  // 2. Unemployment
+  charts.unemp = new Chart(document.getElementById('unempChart'), {
+    type: 'line',
+    data: { labels: months, datasets: [{
+      label: 'نرخ بیکاری (%)', data: DATA.unemployment?.values || [],
+      borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.15)',
+      borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: '#a78bfa', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 6,
+    }]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a2138', callbacks: { label: ctx => `بیکاری: ${ctx.raw}%` } } },
+      scales: { y: { grid: { color: gridColor }, ticks: { callback: v => v + '%' } }, x: { grid: { display: false } } }
+    }
+  });
+
+  // 3. Wage
+  charts.wage = new Chart(document.getElementById('wageChart'), {
+    type: 'bar',
+    data: { labels: months, datasets: [{
+      label: 'دستمزد MoM (%)', data: DATA.wage?.values || [],
+      backgroundColor: 'rgba(91,140,255,0.7)', borderColor: '#5b8cff', borderWidth: 2, borderRadius: 8,
+    }]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a2138', callbacks: { label: ctx => `دستمزد: ${ctx.raw}%` } } },
+      scales: { y: { grid: { color: gridColor }, ticks: { callback: v => v + '%' } }, x: { grid: { display: false } } }
+    }
+  });
+
+  // 4. Claims
+  charts.claims = new Chart(document.getElementById('claimsChart'), {
+    type: 'line',
+    data: { labels: months, datasets: [{
+      label: 'ادعای بیکاری (K)', data: DATA.claims?.values || [],
+      borderColor: '#ffc857', backgroundColor: 'rgba(255,200,87,0.15)',
+      borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: '#ffc857', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 6,
+    }]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a2138', callbacks: { label: ctx => `بیکاری: ${ctx.raw}K` } } },
+      scales: { y: { grid: { color: gridColor }, ticks: { callback: v => v + 'K' } }, x: { grid: { display: false } } }
+    }
+  });
+
+  // 5. Radar — محاسبه پویا
+  const nfpAvg = nfpVals.filter(v=>v!=null).reduce((a,b)=>a+b,0) / Math.max(1, nfpVals.filter(v=>v!=null).length);
+  const claimsAvg = (DATA.claims?.values || []).reduce((a,b)=>a+b,0) / Math.max(1, (DATA.claims?.values || []).length);
+  charts.radar = new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: { labels: ['قدرت استخدام','بیکاری پایین','دستمزد پایدار','اخراج پایین'],
+      datasets: [{
+        label: 'وضعیت فعلی',
+        data: [ Math.min(100, Math.max(0, nfpAvg/2)), 90, 75, claimsAvg < 250 ? 88 : 50 ],
+        borderColor: '#ff5b6e', backgroundColor: 'rgba(255,91,110,0.2)', borderWidth: 2, pointBackgroundColor: '#ff5b6e', pointRadius: 4,
+      }, {
+        label: 'حالت ایده‌آل', data: [85,90,80,90],
+        borderColor: '#00d4a8', backgroundColor: 'rgba(0,212,168,0.1)', borderWidth: 2, borderDash: [5,5], pointBackgroundColor: '#00d4a8', pointRadius: 4,
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } } },
+      scales: { r: { min: 0, max: 100, grid: { color: gridColor }, angleLines: { color: gridColor }, pointLabels: { font: { size: 11 }, color: '#e4e9f7' }, ticks: { display: false } } }
+    }
+  });
+}
+
+// ─── رندر تحلیل‌ها ───
+function renderAnalysis() {
+  const nfpVals = (DATA.nfp?.values || []).filter(v => v != null);
+  const nfpAvg = nfpVals.length ? Math.round(nfpVals.reduce((a,b)=>a+b,0)/nfpVals.length) : 0;
+  const worst = nfpVals.length ? Math.min(...nfpVals) : 0;
+  const unempLatest = DATA.unemployment?.latest;
+  const wageLatest = DATA.wage?.latest;
+
+  document.getElementById('nfpNote').innerHTML =
+    `میانگین NFP دوره: <strong style="color:var(--blue)">${nfpAvg}K</strong> ` +
+    (worst < 0 ? `· ضعیف‌ترین ماه: <strong style="color:var(--red)">${worst}K</strong>` : '');
+
+  // سیگنال فدرال رزرو
+  const fedUl = document.getElementById('fedSignal');
+  if (nfpAvg < 100) {
+    fedUl.innerHTML = '<li>داده‌ها <strong>Dovish</strong> (متمایل به کاهش نرخ)</li><li>احتمال Rate Cut در جلسات بعدی</li><li>تورم دستمزد مزیت برای کات</li>';
+    document.getElementById('marketDesc').textContent = 'داده‌ها ضعیف (Dovish) — احتمال کاهش نرخ بهره';
+  } else if (nfpAvg > 150) {
+    fedUl.innerHTML = '<li>داده‌ها <strong>Hawkish</strong> (متمایل به نگه‌داشتن/افزایش نرخ)</li><li>بازار کار قوی</li><li>احتمال ادامه تایت پالیسی</li>';
+    document.getElementById('marketDesc').textContent = 'داده‌ها قوی (Hawkish) — احتمال نگه‌داشتن نرخ بهره';
+  } else {
+    fedUl.innerHTML = '<li>داده‌ها <strong>خنثی (Neutral)</strong></li><li>بازار کار متعادل</li><li>فدرال رزرو در حالت انتظار</li>';
+    document.getElementById('marketDesc').textContent = 'داده‌ها متعادل — سیاست محتاطانه';
+  }
+}
+
+// ─── رندر وضعیت ───
+function renderStatus() {
+  const src = SOURCE_LABELS[DATA.source] || SOURCE_LABELS.default;
+  document.getElementById('sourceText').textContent = src.text;
+  const badge = document.getElementById('statusBadge');
+  badge.className = 'badge ' + src.cls + (src.cls !== 'green' ? '' : '');
+  document.getElementById('updateTime').textContent = formatUpdateTime(DATA.last_update);
+}
+
+function renderAll() {
+  renderStatus();
+  renderKpis();
+  renderTable();
+  renderCharts();
+  renderAnalysis();
+}
+
+// ─── اجرا ───
+loadData();
+// به‌روزرسانی خودکار هر ۵ دقیقه (وقتی روی سرور است)
+setInterval(() => { loadData(); }, 5 * 60 * 1000);
+</script>
+</body>
+</html>
