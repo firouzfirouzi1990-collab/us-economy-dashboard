@@ -74,6 +74,16 @@ DEFAULT_DATA = {
         "values": [223, 221, 219, 217, 225, 215],
         "latest": 215,
     },
+    "ism_mfg": {
+        "months": ["دسامبر", "ژانویه", "فوریه", "مارس", "آوریل", "می", "ژوئن"],
+        "values": [49.2, 50.9, 50.3, 49.0, 48.7, 48.5, 52.8],
+        "latest": 52.8,
+    },
+    "ism_svc": {
+        "months": ["دسامبر", "ژانویه", "فوریه", "مارس", "آوریل", "می", "ژوئن"],
+        "values": [52.1, 52.8, 53.5, 50.8, 51.6, 49.9, 50.8],
+        "latest": 50.8,
+    },
 }
 
 
@@ -156,6 +166,8 @@ def fetch_all_fred():
     unemployment = fetch_fred_series("UNRATE", config.MONTHS_BACK)
     wage = fetch_fred_series("CES0500000003", config.MONTHS_BACK)
     claims = fetch_fred_series("ICSA", config.MONTHS_BACK)
+    ism_mfg = fetch_fred_series("NAPM", config.MONTHS_BACK)
+    ism_svc = fetch_fred_series("NAPMS", config.MONTHS_BACK)
 
     success = all(v is not None for v in [nfp_changes, unemployment, wage, claims])
     if not success:
@@ -166,6 +178,8 @@ def fetch_all_fred():
         "unemployment": unemployment,
         "wage": wage,
         "claims": claims,
+        "ism_mfg": ism_mfg,
+        "ism_svc": ism_svc,
         "success": success,
     }
 
@@ -221,6 +235,105 @@ def fetch_bls():
     except requests.RequestException as e:
         log.error(f"BLS ❌ خطا: {e}")
         return None
+
+
+# ─────────────────────────────────────────────────────────
+# 3½. DBnomics API — ISM زیرشاخص‌ها
+# ─────────────────────────────────────────────────────────
+# توجه: جزئیات زیرشاخص‌های ISM از FRED حذف شده (کپی‌رایت).
+# این داده‌ها از DBnomics (رایگان، بدون کلید API) دریافت می‌شود.
+# هر دیتاست چند سری دارد؛ سری 'Index' همون مقدار PMI واقعی (حول ۵۰) است.
+
+
+def fetch_dbnomics_ism():
+    """دریافت زیرشاخص‌های ISM از DBnomics API (رایگان، بدون کلید)
+
+    توجه: هر دیتاست چند سری داره (% Higher, Index, % Lower, Net, % Same).
+    سری 'Index' همون مقدار PMI واقعی حول ۵۰ است.
+    """
+    log.info("📡 دریافت جزئیات ISM از DBnomics API...")
+
+    # نگاشت: (dataset_code, label_en, label_fa)
+    mfg_indicators = [
+        ("production", "Production", "تولید"),
+        ("neword", "New Orders", "سفارشات جدید"),
+        ("supdel", "Supplier Deliveries", "تحویل‌دهندگان"),
+        ("employment", "Employment", "اشتغال"),
+        ("inventories", "Inventories", "موجودی"),
+        ("prices", "Prices Paid", "قیمت‌های پرداختی"),
+        ("newexpord", "New Export Orders", "سفارشات صادراتی"),
+        ("imports", "Imports", "واردات"),
+        ("bacord", "Backlog of Orders", "سفارشات در انتظار"),
+        ("cusinv", "Customers' Inventories", "موجودی مشتریان"),
+    ]
+    svc_indicators = [
+        ("nm-busact", "Business Activity", "فعالیت تجاری"),
+        ("nm-neword", "New Orders", "سفارشات جدید"),
+        ("nm-employment", "Employment", "اشتغال"),
+        ("nm-prices", "Prices Paid", "قیمت‌های پرداختی"),
+        ("nm-supdel", "Supplier Deliveries", "تحویل‌دهندگان"),
+        ("nm-invsen", "Inventory Sentiment", "موجودی"),
+        ("nm-imports", "Imports", "واردات"),
+        ("nm-newexpord", "Exports", "صادرات"),
+        ("nm-bacord", "Order Backlog", "سفارشات در انتظار"),
+    ]
+
+    results = {"mfg": {}, "svc": {}}
+
+    for section, indicators in [("mfg", mfg_indicators), ("svc", svc_indicators)]:
+        for dataset_code, label_en, label_fa in indicators:
+            url = f"https://api.db.nomics.world/v22/series/ISM/{dataset_code}"
+            try:
+                resp = requests.get(url, params={
+                    "observations": True,
+                    "limit": config.MONTHS_BACK + 5,
+                }, timeout=15)
+                resp.raise_for_status()
+                data = resp.json()
+
+                docs = data.get("series", {}).get("docs", [])
+                # سری 'Index' رو پیدا کن (همون PMI واقعی)
+                index_series = None
+                for s in docs:
+                    if s.get("series_name") == "Index":
+                        index_series = s
+                        break
+                # fallback: اگر Index نبود، سری که مقادیرش حول ۵۰ است
+                if not index_series and docs:
+                    for s in docs:
+                        vals = [v for v in s.get("value", []) if v is not None]
+                        if vals and 40 < sum(vals[-3:]) / max(1, len(vals[-3:])) < 60:
+                            index_series = s
+                            break
+                if not index_series and docs:
+                    index_series = docs[0]
+
+                if index_series:
+                    periods = index_series.get("period", [])
+                    values = index_series.get("value", [])
+
+                    monthly = []
+                    for p, v in zip(periods, values):
+                        try:
+                            monthly.append({"date": p, "value": round(float(v), 1)})
+                        except (ValueError, TypeError):
+                            monthly.append({"date": p, "value": None})
+
+                    monthly = monthly[-config.MONTHS_BACK:]
+
+                    results[section][label_en] = {
+                        "label_en": label_en,
+                        "label_fa": label_fa,
+                        "data": monthly,
+                    }
+                    latest_val = next(
+                        (m["value"] for m in reversed(monthly) if m["value"] is not None), None
+                    )
+                    log.info(f"  DBnomics ✅ {dataset_code} ({label_en}): {latest_val}")
+            except requests.RequestException as e:
+                log.warning(f"  DBnomics ⚠️ خطا در {dataset_code}: {e}")
+
+    return results
 
 
 # ─────────────────────────────────────────────────────────
@@ -280,13 +393,18 @@ def scrape_latest_data():
 # ─────────────────────────────────────────────────────────
 def process_date(date_str):
     """تبدیل تاریخ به نام فارسی ماه"""
-    try:
-        dt = datetime.strptime(date_str, "%Y-%m-%d")
-        month_name = PERSIAN_MONTHS[dt.month - 1]
-        year = dt.year
-        return f"{month_name} {year}"
-    except ValueError:
+    if not date_str:
         return date_str
+    # فرمت‌های ممکن: 'YYYY-MM-DD' یا 'YYYY-MM' (از DBnomics)
+    for fmt in ("%Y-%m-%d", "%Y-%m"):
+        try:
+            dt = datetime.strptime(date_str, fmt)
+            month_name = PERSIAN_MONTHS[dt.month - 1]
+            year = dt.year
+            return f"{month_name} {year}"
+        except ValueError:
+            continue
+    return date_str
 
 
 def compute_mom_percent(series_data):
@@ -309,7 +427,7 @@ def compute_mom_percent(series_data):
     return result
 
 
-def build_output(fred_data):
+def build_output(fred_data, dbnomics_ism=None):
     """تبدیل داده خام FRED به ساختار JSON نهایی برای داشبورد"""
     output = {
         "last_update": datetime.now().isoformat(),
@@ -372,6 +490,52 @@ def build_output(fred_data):
             "latest": values[-1] if values else None,
         }
 
+    # === ISM Manufacturing PMI ===
+    # شاخصی که حدود ۵۰ است؛ بالای ۵۰ = رشد، زیر ۵۰ = انقباض
+    ism_mfg_raw = fred_data.get("ism_mfg")
+    if ism_mfg_raw:
+        values = [d["value"] for d in ism_mfg_raw]
+        months = [process_date(d["date"]) for d in ism_mfg_raw]
+        valid = [v for v in values if v is not None]
+        output["ism_mfg"] = {
+            "months": months,
+            "values": values,
+            "latest": valid[-1] if valid else None,
+        }
+
+    # === ISM Services PMI ===
+    ism_svc_raw = fred_data.get("ism_svc")
+    if ism_svc_raw:
+        values = [d["value"] for d in ism_svc_raw]
+        months = [process_date(d["date"]) for d in ism_svc_raw]
+        valid = [v for v in values if v is not None]
+        output["ism_svc"] = {
+            "months": months,
+            "values": values,
+            "latest": valid[-1] if valid else None,
+        }
+
+    # === ISM جزئیات زیرشاخص‌ها (از DBnomics) ===
+    if dbnomics_ism:
+        output["ism_details"] = {}
+        for section, key in [("mfg", "ism_mfg_details"), ("svc", "ism_svc_details")]:
+            if dbnomics_ism.get(section):
+                details = {}
+                for indicator, info in dbnomics_ism[section].items():
+                    monthly = info.get("data", [])
+                    values = [m["value"] for m in monthly]
+                    months_list = [process_date(m["date"]) for m in monthly]
+                    valid = [v for v in values if v is not None]
+                    details[indicator] = {
+                        "label_en": info["label_en"],
+                        "label_fa": info["label_fa"],
+                        "months": months_list,
+                        "values": values,
+                        "latest": valid[-1] if valid else None,
+                        "prev": valid[-2] if len(valid) >= 2 else None,
+                    }
+                output[key] = details
+
     return output
 
 
@@ -420,8 +584,16 @@ def fetch_all():
 
     # مرحله ۱: FRED
     fred_data = fetch_all_fred()
+
+    # مرحله ۱½: DBnomics — جزئیات زیرشاخص‌های ISM
+    dbnomics_ism = None
+    try:
+        dbnomics_ism = fetch_dbnomics_ism()
+    except Exception as e:
+        log.warning(f"DBnomics خطا: {e}")
+
     if fred_data and fred_data.get("success"):
-        output = build_output(fred_data)
+        output = build_output(fred_data, dbnomics_ism)
         output["source"] = "fred"
         log.info("✅ داده‌ها با موفقیت از FRED دریافت شد")
         save_data(output)
@@ -494,6 +666,10 @@ if __name__ == "__main__":
         print(f"  دستمزد MoM: {wage.get('latest', '—')}%")
         claims = data.get("claims", {})
         print(f"  ادعای بیکاری: {claims.get('latest', '—')}K")
+        ism_mfg = data.get("ism_mfg", {})
+        print(f"  ISM Manufacturing PMI: {ism_mfg.get('latest', '—')}")
+        ism_svc = data.get("ism_svc", {})
+        print(f"  ISM Services PMI: {ism_svc.get('latest', '—')}")
     print("-" * 55)
     print("  ✅ فایل data.json آپدیت شد")
     print()

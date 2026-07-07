@@ -36,6 +36,8 @@ FRED_SERIES = {
     "unemployment": "UNRATE",  # Unemployment Rate
     "wage": "CES0500000003",   # Average Hourly Earnings
     "claims": "ICSA",          # Initial Jobless Claims
+    "ism_mfg": "NAPM",         # ISM Manufacturing PMI (شاخص حول ۵۰)
+    "ism_svc": "NAPMS",        # ISM Services PMI / Non-Manufacturing
 }
 
 # تنظیمات لاگ

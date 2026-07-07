@@ -15,6 +15,8 @@
     --yellow: #ffc857; --yellow-glow: rgba(255, 200, 87, 0.15);
     --blue: #5b8cff; --blue-glow: rgba(91, 140, 255, 0.15);
     --purple: #a78bfa;
+    --teal: #14d4c8; --teal-glow: rgba(20, 212, 200, 0.15);
+    --orange: #ff9f43; --orange-glow: rgba(255, 159, 67, 0.15);
   }
   body {
     font-family: 'Vazirmatag', 'Segoe UI', Tahoma, sans-serif;
@@ -149,6 +151,20 @@
       <div class="kpi-sub" id="kpiClaimsSub">—</div>
       <div class="kpi-change up" id="kpiClaimsChange">—</div>
     </div>
+    <div class="kpi-card">
+      <div class="accent" style="background: linear-gradient(90deg, var(--teal), transparent);"></div>
+      <div class="kpi-label">🏭 ISM Manufacturing PMI</div>
+      <div class="kpi-value" id="kpiIsmMfg">—</div>
+      <div class="kpi-sub" id="kpiIsmMfgSub">—</div>
+      <div class="kpi-change flat" id="kpiIsmMfgChange">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="accent" style="background: linear-gradient(90deg, var(--orange), transparent);"></div>
+      <div class="kpi-label">🏬 ISM Services PMI</div>
+      <div class="kpi-value" id="kpiIsmSvc">—</div>
+      <div class="kpi-sub" id="kpiIsmSvcSub">—</div>
+      <div class="kpi-change flat" id="kpiIsmSvcChange">—</div>
+    </div>
   </div>
 
   <div class="section">
@@ -185,6 +201,52 @@
       <h3>🎯 ترکیب شاخص‌ها — رادار</h3>
       <div class="chart-sub">مقایسه وضعیت فعلی با حالت ایده‌آل</div>
       <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-title"><div class="icon" style="background: var(--teal-glow);">🏭</div> شاخص‌های ISM — بخش تولید و خدمات</div>
+        <div class="section-desc">PMI بالای ۵۰ = انبساط (رشد) · زیر ۵۰ = انقباض (کاهش)</div>
+      </div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>🏭 ISM Manufacturing PMI</h3>
+        <div class="chart-sub">شاخص مدیران خرید کارخانه‌ها (خط مرجع: ۵۰)</div>
+        <div class="chart-wrap"><canvas id="ismMfgChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>🏬 ISM Services PMI</h3>
+        <div class="chart-sub">شاخص مدیران خرید بخش خدمات (خط مرجع: ۵۰)</div>
+        <div class="chart-wrap"><canvas id="ismSvcChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-title"><div class="icon" style="background: var(--orange-glow);">🧩</div> جزئیات زیرشاخص‌های ISM</div>
+        <div class="section-desc">تفکیک کامل شاخص‌های فرعی (بالای ۵۰ = انبساط · زیر ۵۰ = انقباض) — منبع: DBnomics</div>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;margin-bottom:12px;color:var(--teal);">🏭 زیرشاخص‌های بخش تولید (Manufacturing)</h3>
+    <div style="overflow-x: auto; margin-bottom: 28px;">
+      <table>
+        <thead><tr><th>شاخص</th><th>ماه جاری</th><th>ماه قبل</th><th>تغییر</th><th>وضعیت</th></tr></thead>
+        <tbody id="ismMfgDetailsBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted)">در حال بارگذاری...</td></tr></tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:15px;margin-bottom:12px;color:var(--orange);">🏬 زیرشاخص‌های بخش خدمات (Services)</h3>
+    <div style="overflow-x: auto;">
+      <table>
+        <thead><tr><th>شاخص</th><th>ماه جاری</th><th>ماه قبل</th><th>تغییر</th><th>وضعیت</th></tr></thead>
+        <tbody id="ismSvcDetailsBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted)">در حال بارگذاری...</td></tr></tbody>
+      </table>
     </div>
   </div>
 
@@ -248,7 +310,7 @@
   </div>
 
   <footer>
-    <p>📊 داده‌ها از منابع رسمی: Bureau of Labor Statistics (BLS)، FRED، Trading Economics</p>
+    <p>📊 داده‌ها از منابع رسمی: Bureau of Labor Statistics (BLS)، FRED، DBnomics، Trading Economics</p>
     <p style="margin-top: 8px;">به‌صورت خودکار آپدیت می‌شود — این داشبورد صرفاً جهت تحلیل آموزشی است.</p>
   </footer>
 </div>
@@ -265,6 +327,8 @@ const FALLBACK = {
   unemployment: { months: ["ژانویه","فوریه","مارس","آوریل","می","ژوئن"], values: [4.3,4.4,4.3,4.3,4.3,4.2], latest:4.2 },
   wage: { months: ["ژانویه","فوریه","مارس","آوریل","می","ژوئن"], values: [0.4,0.3,0.3,0.2,0.3,0.3], yoy:3.5, level:37.64, latest:0.3 },
   claims: { months: ["ژانویه","فوریه","مارس","آوریل","می","ژوئن"], values: [223,221,219,217,225,215], latest:215 },
+  ism_mfg: { months: ["دسامبر","ژانویه","فوریه","مارس","آوریل","می","ژوئن"], values: [49.2,50.9,50.3,49.0,48.7,48.5,52.8], latest:52.8 },
+  ism_svc: { months: ["دسامبر","ژانویه","فوریه","مارس","آوریل","می","ژوئن"], values: [52.1,52.8,53.5,50.8,51.6,49.9,50.8], latest:50.8 },
 };
 
 const SOURCE_LABELS = {
@@ -364,6 +428,32 @@ function renderKpis() {
   document.getElementById('kpiClaims').textContent = claimsLatest != null ? claimsLatest + 'K' : '—';
   document.getElementById('kpiClaimsSub').textContent = claimsPrev != null ? `قبلی: ${claimsPrev}K` : '—';
   document.getElementById('kpiClaimsChange').textContent = '';
+
+  // ISM Manufacturing
+  const ismMfg = DATA.ism_mfg || {};
+  const ismMfgVals = (ismMfg.values || []).filter(v => v !== null);
+  const ismMfgLatest = ismMfg.latest ?? ismMfgVals[ismMfgVals.length-1];
+  const ismMfgPrev = ismMfgVals.length >= 2 ? ismMfgVals[ismMfgVals.length-2] : null;
+  document.getElementById('kpiIsmMfg').textContent = ismMfgLatest != null ? ismMfgLatest.toFixed(1) : '—';
+  document.getElementById('kpiIsmMfgSub').textContent = ismMfgPrev != null ? `قبلی: ${ismMfgPrev.toFixed(1)}` : '—';
+  const mChg = document.getElementById('kpiIsmMfgChange');
+  if (ismMfgLatest != null) {
+    if (ismMfgLatest >= 50) { mChg.className = 'kpi-change up'; mChg.textContent = '🟢 انبساط'; }
+    else { mChg.className = 'kpi-change down'; mChg.textContent = '🔴 انقباض'; }
+  } else { mChg.textContent = ''; }
+
+  // ISM Services
+  const ismSvc = DATA.ism_svc || {};
+  const ismSvcVals = (ismSvc.values || []).filter(v => v !== null);
+  const ismSvcLatest = ismSvc.latest ?? ismSvcVals[ismSvcVals.length-1];
+  const ismSvcPrev = ismSvcVals.length >= 2 ? ismSvcVals[ismSvcVals.length-2] : null;
+  document.getElementById('kpiIsmSvc').textContent = ismSvcLatest != null ? ismSvcLatest.toFixed(1) : '—';
+  document.getElementById('kpiIsmSvcSub').textContent = ismSvcPrev != null ? `قبلی: ${ismSvcPrev.toFixed(1)}` : '—';
+  const sChg = document.getElementById('kpiIsmSvcChange');
+  if (ismSvcLatest != null) {
+    if (ismSvcLatest >= 50) { sChg.className = 'kpi-change up'; sChg.textContent = '🟢 انبساط'; }
+    else { sChg.className = 'kpi-change down'; sChg.textContent = '🔴 انقباض'; }
+  } else { sChg.textContent = ''; }
 }
 
 // ─── رندر جدول ───
@@ -387,6 +477,73 @@ function renderTable() {
     </tr>`;
   }
   document.getElementById('dataTableBody').innerHTML = html;
+}
+
+// ─── رندر جزئیات زیرشاخص‌های ISM ───
+function evalIpmi(v) {
+  if (v === null || v === undefined) return { cls: 'ok', text: '—' };
+  if (v >= 50) return { cls: 'good', text: '🟢 انبساط' };
+  return { cls: 'bad', text: '🔴 انقباض' };
+}
+
+function renderIsmDetails() {
+  // === Manufacturing ===
+  const mfgDetails = DATA.ism_mfg_details || {};
+  const mfgBody = document.getElementById('ismMfgDetailsBody');
+  if (Object.keys(mfgDetails).length === 0) {
+    mfgBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">داده‌ای موجود نیست</td></tr>';
+  } else {
+    let html = '';
+    for (const [key, info] of Object.entries(mfgDetails)) {
+      const latest = info.latest;
+      const prev = info.prev;
+      let diffStr = '—', diffCls = 'ok';
+      if (latest != null && prev != null) {
+        const diff = +(latest - prev).toFixed(1);
+        if (diff > 0) { diffStr = `▲ +${diff}`; diffCls = 'good'; }
+        else if (diff < 0) { diffStr = `▼ ${diff}`; diffCls = 'bad'; }
+        else { diffStr = '━ 0.0'; diffCls = 'ok'; }
+      }
+      const ev = evalIpmi(latest);
+      html += `<tr>
+        <td><strong>${info.label_fa}</strong><br><span style="font-size:11px;color:var(--text-muted)">${info.label_en}</span></td>
+        <td style="font-size:16px;font-weight:700;">${latest != null ? latest.toFixed(1) : '—'}</td>
+        <td>${prev != null ? prev.toFixed(1) : '—'}</td>
+        <td><span class="pill ${diffCls}">${diffStr}</span></td>
+        <td><span class="pill ${ev.cls}">${ev.text}</span></td>
+      </tr>`;
+    }
+    mfgBody.innerHTML = html;
+  }
+
+  // === Services ===
+  const svcDetails = DATA.ism_svc_details || {};
+  const svcBody = document.getElementById('ismSvcDetailsBody');
+  if (Object.keys(svcDetails).length === 0) {
+    svcBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">داده‌ای موجود نیست</td></tr>';
+  } else {
+    let html = '';
+    for (const [key, info] of Object.entries(svcDetails)) {
+      const latest = info.latest;
+      const prev = info.prev;
+      let diffStr = '—', diffCls = 'ok';
+      if (latest != null && prev != null) {
+        const diff = +(latest - prev).toFixed(1);
+        if (diff > 0) { diffStr = `▲ +${diff}`; diffCls = 'good'; }
+        else if (diff < 0) { diffStr = `▼ ${diff}`; diffCls = 'bad'; }
+        else { diffStr = '━ 0.0'; diffCls = 'ok'; }
+      }
+      const ev = evalIpmi(latest);
+      html += `<tr>
+        <td><strong>${info.label_fa}</strong><br><span style="font-size:11px;color:var(--text-muted)">${info.label_en}</span></td>
+        <td style="font-size:16px;font-weight:700;">${latest != null ? latest.toFixed(1) : '—'}</td>
+        <td>${prev != null ? prev.toFixed(1) : '—'}</td>
+        <td><span class="pill ${diffCls}">${diffStr}</span></td>
+        <td><span class="pill ${ev.cls}">${ev.text}</span></td>
+      </tr>`;
+    }
+    svcBody.innerHTML = html;
+  }
 }
 
 // ─── رندر چارت‌ها ───
@@ -481,6 +638,77 @@ function renderCharts() {
       scales: { r: { min: 0, max: 100, grid: { color: gridColor }, angleLines: { color: gridColor }, pointLabels: { font: { size: 11 }, color: '#e4e9f7' }, ticks: { display: false } } }
     }
   });
+
+  // 6. ISM Manufacturing PMI — با خط مرجع ۵۰
+  const ismMfgMonths = (DATA.ism_mfg?.months || months).map(shortMonth);
+  charts.ismMfg = new Chart(document.getElementById('ismMfgChart'), {
+    type: 'line',
+    data: { labels: ismMfgMonths, datasets: [{
+      label: 'ISM Manufacturing PMI', data: DATA.ism_mfg?.values || [],
+      borderColor: '#14d4c8', backgroundColor: 'rgba(20,212,200,0.15)',
+      borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: '#14d4c8', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 6,
+    }]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: '#1a2138', callbacks: { label: ctx => ctx.raw != null ? `PMI: ${ctx.raw.toFixed(1)} — ${ctx.raw >= 50 ? '🟢 انبساط' : '🔴 انقباض'}` : null } },
+        annotation: {}
+      },
+      scales: {
+        y: { suggestedMin: 44, suggestedMax: 56, grid: { color: gridColor }, ticks: { callback: v => v.toFixed(0) } },
+        x: { grid: { display: false } }
+      }
+    },
+    plugins: [{
+      id: 'fiftyLine',
+      afterDraw: (chart) => {
+        const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+        const y50 = y.getPixelForValue(50);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,200,87,0.7)';
+        ctx.setLineDash([6,4]); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(left, y50); ctx.lineTo(right, y50); ctx.stroke();
+        ctx.setLineDash([]); ctx.fillStyle = '#ffc857'; ctx.font = '11px Segoe UI';
+        ctx.fillText('۵۰ = خط مرجع', left + 6, y50 - 6);
+        ctx.restore();
+      }
+    }]
+  });
+
+  // 7. ISM Services PMI
+  const ismSvcMonths = (DATA.ism_svc?.months || months).map(shortMonth);
+  charts.ismSvc = new Chart(document.getElementById('ismSvcChart'), {
+    type: 'line',
+    data: { labels: ismSvcMonths, datasets: [{
+      label: 'ISM Services PMI', data: DATA.ism_svc?.values || [],
+      borderColor: '#ff9f43', backgroundColor: 'rgba(255,159,67,0.15)',
+      borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: '#ff9f43', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 6,
+    }]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: '#1a2138', callbacks: { label: ctx => ctx.raw != null ? `PMI: ${ctx.raw.toFixed(1)} — ${ctx.raw >= 50 ? '🟢 انبساط' : '🔴 انقباض'}` : null } },
+      },
+      scales: {
+        y: { suggestedMin: 44, suggestedMax: 56, grid: { color: gridColor }, ticks: { callback: v => v.toFixed(0) } },
+        x: { grid: { display: false } }
+      }
+    },
+    plugins: [{
+      id: 'fiftyLineSvc',
+      afterDraw: (chart) => {
+        const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+        const y50 = y.getPixelForValue(50);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,200,87,0.7)';
+        ctx.setLineDash([6,4]); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(left, y50); ctx.lineTo(right, y50); ctx.stroke();
+        ctx.setLineDash([]); ctx.fillStyle = '#ffc857'; ctx.font = '11px Segoe UI';
+        ctx.fillText('۵۰ = خط مرجع', left + 6, y50 - 6);
+        ctx.restore();
+      }
+    }]
+  });
 }
 
 // ─── رندر تحلیل‌ها ───
@@ -522,6 +750,7 @@ function renderAll() {
   renderStatus();
   renderKpis();
   renderTable();
+  renderIsmDetails();
   renderCharts();
   renderAnalysis();
 }
