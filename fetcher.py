@@ -70,8 +70,15 @@ DEFAULT_DATA = {
         "latest": 0.3,
     },
     "claims": {
-        "months": ["ژانویه", "فوریه", "مارس", "آوریل", "می", "ژوئن"],
-        "values": [223, 221, 219, 217, 225, 215],
+        "months": ["4 ژانویه", "11 ژانویه", "18 ژانویه", "25 ژانویه",
+                   "1 فوریه", "8 فوریه", "15 فوریه", "22 فوریه",
+                   "1 مارس", "8 مارس", "15 مارس", "22 مارس",
+                   "5 آوریل", "12 آوریل", "19 آوریل", "26 آوریل",
+                   "3 می", "10 می", "17 می", "24 می",
+                   "7 ژوئن", "14 ژوئن", "21 ژوئن", "28 ژوئن"],
+        "values": [223, 221, 219, 217, 225, 215, 218, 220,
+                   222, 220, 218, 219, 224, 221, 217, 216,
+                   225, 222, 221, 220, 230, 227, 216, 215],
         "latest": 215,
     },
     "ism_mfg": {
@@ -83,6 +90,29 @@ DEFAULT_DATA = {
         "months": ["دسامبر", "ژانویه", "فوریه", "مارس", "آوریل", "می", "ژوئن"],
         "values": [52.1, 52.8, 53.5, 50.8, 51.6, 49.9, 50.8],
         "latest": 50.8,
+    },
+    "ism_mfg_details": {
+        "Production": {"label_en":"Production","label_fa":"تولید","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[49.1,51.2,48.8,49.5,47.8,51.0],"latest":51.0,"prev":47.8},
+        "New Orders": {"label_en":"New Orders","label_fa":"سفارشات جدید","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[47.1,48.3,46.5,47.6,47.4,47.7],"latest":47.7,"prev":47.4},
+        "Supplier Deliveries": {"label_en":"Supplier Deliveries","label_fa":"تحویل‌دهندگان","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[49.5,50.2,48.9,49.8,49.3,50.8],"latest":50.8,"prev":49.3},
+        "Employment": {"label_en":"Employment","label_fa":"اشتغال","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[43.8,46.2,45.1,44.5,44.1,44.9],"latest":44.9,"prev":44.1},
+        "Inventories": {"label_en":"Inventories","label_fa":"موجودی","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[44.8,46.1,45.5,44.8,46.2,45.2],"latest":45.2,"prev":46.2},
+        "Prices Paid": {"label_en":"Prices Paid","label_fa":"قیمت‌های پرداختی","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[52.5,54.2,53.8,56.1,59.5,58.5],"latest":58.5,"prev":59.5},
+        "New Export Orders": {"label_en":"New Export Orders","label_fa":"سفارشات صادراتی","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[47.5,48.2,46.8,47.5,46.1,46.8],"latest":46.8,"prev":46.1},
+        "Imports": {"label_en":"Imports","label_fa":"واردات","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[46.2,47.5,48.1,47.2,45.8,44.6],"latest":44.6,"prev":45.8},
+        "Backlog of Orders": {"label_en":"Backlog of Orders","label_fa":"سفارشات در انتظار","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[44.5,45.2,44.8,46.1,45.5,45.8],"latest":45.8,"prev":45.5},
+        "Customers Inventories": {"label_en":"Customers Inventories","label_fa":"موجودی مشتریان","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[44.1,45.5,44.8,45.2,44.1,43.3],"latest":43.3,"prev":44.1},
+    },
+    "ism_svc_details": {
+        "Business Activity": {"label_en":"Business Activity","label_fa":"فعالیت تجاری","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[53.5,54.2,52.8,51.5,54.8,56.0],"latest":56.0,"prev":54.8},
+        "New Orders": {"label_en":"New Orders","label_fa":"سفارشات جدید","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[54.1,55.2,53.8,52.5,55.1,57.9],"latest":57.9,"prev":55.1},
+        "Employment": {"label_en":"Employment","label_fa":"اشتغال","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[50.5,51.2,49.8,48.5,50.8,52.0],"latest":52.0,"prev":50.8},
+        "Prices Paid": {"label_en":"Prices Paid","label_fa":"قیمت‌های پرداختی","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[60.5,62.1,59.8,58.5,61.2,64.3],"latest":64.3,"prev":61.2},
+        "Supplier Deliveries": {"label_en":"Supplier Deliveries","label_fa":"تحویل‌دهندگان","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[51.2,50.8,51.5,52.2,51.8,51.8],"latest":51.8,"prev":51.8},
+        "Inventory Sentiment": {"label_en":"Inventory Sentiment","label_fa":"موجودی","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[53.2,52.5,53.8,54.1,53.5,54.1],"latest":54.1,"prev":53.5},
+        "Imports": {"label_en":"Imports","label_fa":"واردات","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[51.5,52.8,51.2,50.5,51.1,50.3],"latest":50.3,"prev":51.1},
+        "Exports": {"label_en":"Exports","label_fa":"صادرات","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[52.1,53.5,51.8,50.5,52.8,54.2],"latest":54.2,"prev":52.8},
+        "Order Backlog": {"label_en":"Order Backlog","label_fa":"سفارشات در انتظار","months":["جولای 2025","آگوست 2025","سپتامبر 2025","اکتبر 2025","نوامبر 2025","دسامبر 2025"],"values":[48.5,49.2,47.5,48.1,43.5,42.6],"latest":42.6,"prev":43.5},
     },
 }
 
@@ -479,11 +509,20 @@ def build_output(fred_data, dbnomics_ism=None):
         }
 
     # === Claims ===
-    # توجه: ICSA به‌صورت "تعداد نفر" گزارش می‌شود، پس باید /1000 شود (215000 -> 215K).
+    # توجه: ICSA داده هفتگی است — تاریخ باید روز + ماه باشد (نه فقط نام ماه)
+    # مثلاً "۷ جولای ۲۰۲۶" به‌جای "جولای ۲۰۲۶" تا هفته‌ها قابل تفکیک باشند.
     claims_raw = fred_data.get("claims")
     if claims_raw:
         values = [int(d["value"] / 1000) for d in claims_raw if d["value"]]
-        months = [process_date(d["date"]) for d in claims_raw if d["value"]]
+        months = []
+        for d in claims_raw:
+            if d["value"] is None:
+                continue
+            try:
+                dt = datetime.strptime(d["date"], "%Y-%m-%d")
+                months.append(f"{dt.day} {PERSIAN_MONTHS[dt.month - 1]}")
+            except (ValueError, TypeError):
+                months.append(d["date"])
         output["claims"] = {
             "months": months,
             "values": values,
@@ -573,6 +612,34 @@ def save_cache(data, filepath=None):
 # ─────────────────────────────────────────────────────────
 # تابع اصلی
 # ─────────────────────────────────────────────────────────
+def _merge_ism_details(output, dbnomics_ism):
+    """جزئیات ISM از DBnomics رو به output اضافه کن (در حالت fallback).
+
+    اگر output قبلاً جزئیات نداشته باشه، از DEFAULT_DATA یا DBnomics زنده استفاده میشه.
+    """
+    if not dbnomics_ism:
+        return  # DEFAULT_DATA قبلاً جزئیات داره
+    for section, key in [("mfg", "ism_mfg_details"), ("svc", "ism_svc_details")]:
+        if not dbnomics_ism.get(section):
+            continue
+        details = {}
+        for indicator, info in dbnomics_ism[section].items():
+            monthly = info.get("data", [])
+            values = [m["value"] for m in monthly]
+            months_list = [process_date(m["date"]) for m in monthly]
+            valid = [v for v in values if v is not None]
+            details[indicator] = {
+                "label_en": info["label_en"],
+                "label_fa": info["label_fa"],
+                "months": months_list,
+                "values": values,
+                "latest": valid[-1] if valid else None,
+                "prev": valid[-2] if len(valid) >= 2 else None,
+            }
+        if details:
+            output[key] = details
+
+
 def fetch_all():
     """دریافت داده‌ها از تمام منابع با fallback"""
     print()
@@ -585,7 +652,7 @@ def fetch_all():
     # مرحله ۱: FRED
     fred_data = fetch_all_fred()
 
-    # مرحله ۱½: DBnomics — جزئیات زیرشاخص‌های ISM
+    # مرحله ۱½: DBnomics — جزئیات زیرشاخص‌های ISM (مستقل از FRED)
     dbnomics_ism = None
     try:
         dbnomics_ism = fetch_dbnomics_ism()
@@ -608,6 +675,8 @@ def fetch_all():
         output = DEFAULT_DATA.copy()
         output["source"] = "bls"
         output["last_update"] = datetime.now().isoformat()
+        # جزئیات ISM از DBnomics رو به fallback اضافه کن
+        _merge_ism_details(output, dbnomics_ism)
         save_data(output)
         return output
 
@@ -627,6 +696,8 @@ def fetch_all():
             output["wage"]["latest"] = scraped["wage"]
         if scraped["claims"] is not None:
             output["claims"]["latest"] = int(scraped["claims"])
+        # جزئیات ISM از DBnomics رو به fallback اضافه کن
+        _merge_ism_details(output, dbnomics_ism)
         save_data(output)
         return output
 
@@ -638,6 +709,7 @@ def fetch_all():
         output = cached
         output["source"] = "cache"
         output["last_update"] = datetime.now().isoformat()
+        _merge_ism_details(output, dbnomics_ism)
         save_data(output)
         return output
 
@@ -645,6 +717,7 @@ def fetch_all():
     output = DEFAULT_DATA.copy()
     output["source"] = "default"
     output["last_update"] = datetime.now().isoformat()
+    _merge_ism_details(output, dbnomics_ism)
     save_data(output)
     return output
 
